@@ -1,0 +1,13 @@
+<template>
+  <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" clip-rule="evenodd" d="M9 18A9 9 0 109 0a9 9 0 000 18zm2.828-13.243a1 1 0 111.415 1.415L10.414 9l2.829 2.829a1 1 0 11-1.415 1.414L9 10.414l-2.828 2.829a1 1 0 01-1.415-1.415L7.586 9 4.757 6.172a1 1 0 011.415-1.415L9 7.586l2.828-2.829z" /></svg>
+</template>
+
+<script>
+export default {
+  name: "SvgIcon"
+}
+</script>
+
+<style scoped>
+
+</style>
