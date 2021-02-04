@@ -15,7 +15,7 @@
       :popular-phrases="popularPhrases"
       @removeHistoryItem="removeHistoryItem"
       @clearAllHistory="clearAllHistory"
-      @addItem="updateSearchValue"
+      @selectItem="updateSearchValue"
       :visible-history-and-phrases="visibleHistoryAndPhrases"
       :visible-suggestions="visibleSuggestions"
       :suggestions="suggestions"

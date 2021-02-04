@@ -1,32 +1,13 @@
 <template lang="pug">
   .b24-search-offers
-    div(v-if="visibleHistoryAndPhrases")
-      div(v-if="history.length")
-        div(
-          class=`b24-search-offers__item
-                b24-search-offers__item--flex-between
-                b24-search-offers__item--main`)
-          span История поиска
-          button.b24-search-offers__clear-btn(@click="clearAllHistory") Очистить
-        div.b24-search-offers__item.b24-search-offers__item--flex-between(
-            @click="addItem(item.value)"
-            v-for="item in history" :key="item.id"
-            :class="{'b24-search-offers__item--main': item.id === selectedOfferId}")
-          span {{item.value}}
-          button(class=`b24-search-offers__clear-btn`
-                @click.stop="removeHistoryItem(item.id)")
-            img(src="@/assets/svg/close-second.svg" alt="icon")
-      div(v-if="popularPhrases.length")
-        div(class="b24-search-offers__item b24-search-offers__item--main")
-          span Популярные запросы
-        div.b24-search-offers__item(
-            v-for="item in popularPhrases"
-            :key="item.id"
-            @click="addItem(item.attributes.phrase)"
-            :class="{'b24-search-offers__item--main': item.id === selectedOfferId}"
-           )
-          a(class="b24-search-offers__link")
-            | {{item.attributes.phrase}}
+    search-offer-history-phrases(
+      v-if="visibleHistoryAndPhrases"
+      :history="history"
+      :popular-phrases="popularPhrases"
+      :selectedOfferId="selectedOfferId"
+      @selectItem="selectItem"
+      @clearAllHistory="clearAllHistory"
+      @removeHistoryItem="removeHistoryItem")
     div(v-if="visibleSuggestions")
       div.b24-search-offers__list
         div(class=`b24-search-offers__item`
@@ -54,12 +35,14 @@
 </template>
 
 <script>
-import SearchOfferCard from "@/components/SearchForm/SearchOfferCard";
+import SearchOfferProduct from "@/components/SearchForm/SearchOfferProduct";
+import SearchOfferHistoryPhrases from "@/components/SearchForm/SearchOfferHistoryPhrases";
 
 export default {
   name: "SearchOfferList",
   components: {
-    SearchOfferCard
+    SearchOfferProduct,
+    SearchOfferHistoryPhrases
   },
   props: {
     history: {
@@ -90,16 +73,14 @@ export default {
   data: () => ({
   }),
   methods: {
-    removeHistoryItem(id) {
-      this.$emit('removeHistoryItem', this.history.filter(
-          el => el.id !== id
-      ))
+    removeHistoryItem(value) {
+      this.$emit('removeHistoryItem', value)
     },
-    clearAllHistory() {
-      this.$emit('clearAllHistory', [])
+    clearAllHistory(value) {
+      this.$emit('clearAllHistory', value)
     },
-    addItem(value) {
-      this.$emit('addItem', value)
+    selectItem(value) {
+      this.$emit('selectItem', value)
     }
   }
 }
