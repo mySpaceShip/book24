@@ -102,6 +102,10 @@ name: "SearchForm",
     },
     history(val) {
       localStorage.setItem('historyUserSearch', JSON.stringify(val))
+    },
+    visibleOfferList() {
+      this.selectedByKeyOfferIndex = -1
+      this.selectedByKeyOfferId = ''
     }
   },
   created() {
@@ -151,7 +155,7 @@ name: "SearchForm",
         suggestionBreadCrumbLimit: 3,
         suggestionProductLimit: 3
       }
-      this.suggestions = {simple: [], product: [], breadCrumbs: []}
+      this.suggestions = {simple: [], breadCrumbs: [],  product: []}
       for (let i = 0; i<= suggestions.length - 1; i++) {
         if (suggestions[i].meta.length === 0) {
           if (this.suggestions.simple.length - 1 >= options.simpleSuggestionLimit - 1) {
@@ -194,7 +198,6 @@ name: "SearchForm",
       switch (event.keyCode) {
         case 13:
           if (this.selectedByKeyOfferId) {
-            this.visibleOfferList = false
             const selectedOffer = allOffers.filter(el=> el.id === this.selectedByKeyOfferId)[0]
             if (Object.hasOwnProperty.call(selectedOffer, 'link')) {
               this.$router.push(`${selectedOffer.link}`)

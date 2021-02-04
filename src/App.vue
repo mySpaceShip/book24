@@ -19,7 +19,7 @@ export default {
   font-family: 'Open Sans', sans-serif;
 
   .b24-app {
-    padding-top: 100px;
+    margin-top: 100px;
     margin-left: 100px;
   }
 }
