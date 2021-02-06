@@ -28,7 +28,7 @@
 
 <script>
 export default {
-  name: "SearchOfferHistoryPhrases",
+  name: "SearchFormHistoryPhrases",
   props: {
     history: {
       type: Array,
