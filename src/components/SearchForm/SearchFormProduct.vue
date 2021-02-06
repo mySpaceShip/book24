@@ -1,23 +1,23 @@
 <template lang="pug">
-  .b24-search-offer-card
-    a.b24-search-offer-card__img-wrapper(:href="product.link")
+  .b24-search-product
+    a.b24-search-product__img-wrapper(:href="product.link")
       img(:src="product.meta.image")
-    .b24-search-offer-card__info
+    .b24-search-product__info
       a(:href="product.link") {{product.title}}
-      .b24-search-offer-card__price-block
-        span.b24-search-offer-card__price(
-            class="b24-search-offer-card__price--main"
+      .b24-search-product__price-block
+        span.b24-search-product__price(
+            class="b24-search-product__price--main"
         ) {{product.meta.price}} р.
-        span(v-if="discounted" class="b24-search-offer-card__price b24-search-offer-card__price--discount")
+        span(v-if="discounted" class="b24-search-product__price b24-search-product__price--discount")
          | {{product.meta.original_price}} р.
-        span(v-if="discounted" class="b24-search-offer-card__discount")
+        span(v-if="discounted" class="b24-search-product__discount")
           | {{`-${product.meta.discount}%`}}
 
 </template>
 
 <script>
 export default {
-  name: "SearchOfferCard",
+  name: "SearchFormProduct",
   props: {
     product: {
       type: Object,
@@ -33,7 +33,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-.b24-search-offer-card {
+.b24-search-product {
   display: flex;
   align-items: flex-start;
 
