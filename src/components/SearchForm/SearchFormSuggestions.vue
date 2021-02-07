@@ -2,11 +2,13 @@
   .b-24-search-suggestions
     div(class='b24-search-suggestions__item'
       v-for="item in suggestions.simple" :key="item.id"
-      :class="{'b24-search-suggestions__item--selected': item.id === selectedOfferId}")
+      :class="{'b24-search-suggestions__item--selected': item.id === selectedOfferId}"
+      @click="selectItem(item.title)")
       a.b24-search-suggestions__link(:href="item.link") {{item.title}}
     div(class=`b24-search-suggestions__item b24-search-suggestions__item--section`
-      v-for="item in suggestions.breadCrumbs" :key="item.id"
-      :class="{'b24-search-suggestions__item--selected': item.id === selectedOfferId}")
+      v-for="item in suggestions.breadcrumbs" :key="item.id"
+      :class="{'b24-search-suggestions__item--selected': item.id === selectedOfferId}"
+      @click="selectItem(item.title)")
       a(:href="item.link"
         class="b24-search-suggestions__link") {{item.title}}
       .b24-search-suggestions__breadcrumbs
@@ -19,6 +21,7 @@
       v-for="(item, index) in suggestions.product"
       :key="item.id"
       :product="item"
+      @click.native="selectItem(item.title)"
       :class=`{'b24-search-suggestions__item--selected': item.id === selectedOfferId,
                 'b24-search-suggestions__item--section': index === 0}`)
 </template>
@@ -39,6 +42,11 @@ export default {
       type: Object,
       default: () => {}
     },
+  },
+  methods: {
+    selectItem(value) {
+      this.$emit('selectItem', value)
+    }
   }
 }
 </script>
@@ -59,7 +67,7 @@ export default {
     }
 
     &--selected {
-      background: #F5F6F9;
+      background: darken(#F5F6F9, 5%);
     }
   }
 

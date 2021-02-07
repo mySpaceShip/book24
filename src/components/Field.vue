@@ -4,6 +4,7 @@
       v-if="value"
       class="b24-field__clear-btn"
       @click="clear"
+      type="button"
       )
       svg-icon
     input(class="b24-field__input"

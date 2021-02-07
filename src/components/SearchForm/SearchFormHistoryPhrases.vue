@@ -83,7 +83,7 @@ export default {
     }
 
     &--selected {
-      background: #F5F6F9;
+      background: darken(#F5F6F9, 5%);
     }
   }
 

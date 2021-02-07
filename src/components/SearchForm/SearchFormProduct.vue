@@ -38,6 +38,7 @@ export default {
   align-items: flex-start;
 
   &__img-wrapper {
+    flex-shrink: 0;
     margin-right: 15px;
     display: flex;
     align-items: center;
