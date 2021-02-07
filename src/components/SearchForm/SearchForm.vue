@@ -1,8 +1,9 @@
 <template lang="pug">
-  form.b24-search-form(@submit.prevent="" v-on-clickaway="hideOfferList")
+  form.b24-search-form(@submit.prevent="findSearch" v-on-clickaway="hideOfferList")
     .b24-search-field
       img.b24-search-field__icon(src="@/assets/svg/search.svg" alt="icon")
-      field(v-model="searchValue"
+      field(
+        v-model="searchValue"
         @keydown.native="selectOffer"
         @focus="showOffers"
         :expanded="true"
@@ -10,27 +11,28 @@
         placeholder="Поиск книг, авторов" )
       btn.b24-search-field__btn(type="submit" text="Найти" size="small")
     search-offer-list(
-      v-if="visibleOfferList"
+      v-if="visibleOffersList"
       :history="history"
       :popular-phrases="popularPhrases"
       @removeHistoryItem="removeHistoryItem"
       @clearAllHistory="clearAllHistory"
       @selectItem="updateSearchValue"
       :visible-history-and-phrases="visibleHistoryAndPhrases"
-      :visible-suggestions="visibleSuggestions"
+      :visible-suggestions="!visibleHistoryAndPhrases"
       :suggestions="suggestions"
-      :selected-offer-id="selectedByKeyOfferId"
+      :selected-offer-id="selectedByArrowKeyOfferId"
       )
 
 
 </template>
 
 <script>
-import SearchOfferList from "@/components/SearchForm/SearchOfferList";
+import SearchOfferList from "@/components/SearchForm/SearchFormList";
 import Field from "@/components/Field";
 import Btn from "@/components/Button";
 import {localStorageTest} from "@/utils/localStorage";
 import makeRequest from "@/api";
+import {debounce} from "@/utils/helpers";
 import { uuid } from 'vue-uuid'
 import { directive as onClickaway } from 'vue-clickaway';
 
@@ -46,17 +48,16 @@ name: "SearchForm",
   },
   data: () => ({
     searchValue: '',
+    debouncedSearchValue: '',
     history: [],
     popularPhrases: [],
-    visibleOfferList: false,
-    visibleHistoryAndPhrases: true,
-    visibleSuggestions: false,
-    selectedItem: null,
-    selectedByKeyOfferIndex: -1,
-    selectedByKeyOfferId: '',
+    visibleOffersList: false,
+    visibleHistoryAndPhrases: false,
+    selectedByArrowKeyOfferIndex: -1,
+    selectedByArrowKeyOfferId: '',
     suggestions: {
       simple: [],
-      breadCrumbs: [],
+      breadcrumbs: [],
       product: [],
     },
     queriesPopularPhrases: [
@@ -85,30 +86,53 @@ name: "SearchForm",
       }
     ],
   }),
-  watch: {
-    searchValue: function(val, newVal) {
-      if (this.timeout) {
-        clearTimeout(this.timeout);
+  computed: {
+    foundedOffers() {
+      let mappedOffers = []
+      if (this.visibleHistoryAndPhrases) {
+        mappedOffers = this.history
+        if (this.popularPhrases.length - 1 >= 0) {
+          const mappedPhrases = this.popularPhrases.map(el => {
+            return {id : el.id, value: el.attributes.phrase}
+          })
+          mappedOffers = [...this.history, ...mappedPhrases]
+        }
       }
-      this.visibleHistoryAndPhrases = !val ? true : false
-      this.visibleSuggestions = !val ? false : true
-      this.visibleOfferList = !val ? true : false
 
-      if (val.toLowerCase().trim() !== newVal.toLowerCase().trim()) {
-        this.timeout = setTimeout(() => {
-          this.getSuggestions()
-        }, 400);
+      if (!this.visibleHistoryAndPhrases) {
+        Object.entries(this.suggestions).forEach(el => {
+          el[el.length - 1].forEach(suggestion => mappedOffers.push({id: suggestion.id, value: suggestion.title}))
+        })
       }
+      return mappedOffers
     },
+    sameQuery() {
+      let res = false
+      if (Object.hasOwnProperty.call(this.$route.query, 'q')) {
+        res = this.$route.query.q.toLowerCase().trim() === this.searchValue.toLowerCase().trim()
+      }
+      return res
+    }
+  },
+  watch: {
+    searchValue(val) {
+      this.selectedByArrowKeyOfferIndex = -1
+      this.selectedByArrowKeyOfferId = ''
+      this.debouncedSearchValue = val
+      this.visibleHistoryAndPhrases = !val
+      this.visibleOffersList = !val
+    },
+    debouncedSearchValue: debounce(function (val) {
+      if (!this.sameQuery) {
+        this.getSuggestions(val)
+      }
+    }, 400),
     history(val) {
       localStorage.setItem('historyUserSearch', JSON.stringify(val))
     },
-    visibleOfferList() {
-      this.selectedByKeyOfferIndex = -1
-      this.selectedByKeyOfferId = ''
-    }
   },
   created() {
+      this.searchValue = Object.hasOwnProperty.call(this.$route.query, 'q') ? this.$route.query.q : ''
       if (localStorageTest()) {
         const historyStorage = JSON.parse(localStorage.getItem('historyUserSearch'))
         this.history = historyStorage ? historyStorage : []
@@ -121,19 +145,21 @@ name: "SearchForm",
       })
   },
   methods: {
-    getSuggestions() {
-          this.queriesSuggests.forEach(el => {
-            if (Object.prototype.hasOwnProperty.call(el, 'q')) {
-              el.q = this.searchValue.toLowerCase()
-            }
-          })
+    getSuggestions(query) {
+      if (!this.searchValue) {
+        return
+      }
+      this.queriesSuggests.forEach(el => {
+        if (Object.prototype.hasOwnProperty.call(el, 'q')) {
+          el.q = query.toLowerCase()
+        }
+      })
 
       makeRequest("GET", 'api/v1/catalog/search/suggests/', this.queriesSuggests)
           .then(response => {
                 this.mapSuggestions(response.DATA)
-                this.visibleOfferList = response.DATA.length - 1 > 0 || !this.searchValue
+                this.visibleOffersList = response.DATA.length - 1 >= 0 || !query
           })
-      this.updateHistory()
     },
     updateHistory() {
       const hasItem = this.history.filter(el => el.value.toLowerCase().trim() === this.searchValue.toLowerCase().trim())
@@ -148,12 +174,15 @@ name: "SearchForm",
       }
     },
     mapSuggestions(suggestions) {
+      if (suggestions.length - 1 === -1) {
+        return
+      }
       const options = {
         simpleSuggestionLimit: 5,
         suggestionBreadCrumbLimit: 3,
         suggestionProductLimit: 3
       }
-      this.suggestions = {simple: [], breadCrumbs: [],  product: []}
+      this.suggestions = {simple: [], breadcrumbs: [],  product: []}
       for (let i = 0; i<= suggestions.length - 1; i++) {
         if (suggestions[i].meta.length === 0) {
           if (this.suggestions.simple.length - 1 >= options.simpleSuggestionLimit - 1) {
@@ -164,10 +193,10 @@ name: "SearchForm",
 
         if (Object.entries(suggestions[i].meta).length) {
           if (Object.hasOwnProperty.call(suggestions[i].meta,'bread_crumb')) {
-            if (this.suggestions.breadCrumbs.length - 1 >= options.suggestionBreadCrumbLimit - 1) {
+            if (this.suggestions.breadcrumbs.length - 1 >= options.suggestionBreadCrumbLimit - 1) {
               break
             }
-            this.suggestions.breadCrumbs.push({id: uuid.v4(), ...suggestions[i]})
+            this.suggestions.breadcrumbs.push({id: uuid.v4(), ...suggestions[i]})
           }
           if (
               Object.hasOwnProperty.call(suggestions[i].meta,'author')) {
@@ -180,41 +209,23 @@ name: "SearchForm",
       }
     },
     selectOffer(event) {
-      if (!this.visibleOfferList) {
+      if (event.keyCode !== 38 && event.keyCode !== 40) {
         return
       }
-      let allOffers = []
-      if (this.visibleHistoryAndPhrases) {
-        allOffers = [...this.history, ...this.popularPhrases]
-      }
-
-      if (this.visibleSuggestions) {
-        Object.entries(this.suggestions).forEach(el => {
-          allOffers.push(...el[el.length - 1])
-        })
-      }
       switch (event.keyCode) {
-        case 13:
-          if (this.selectedByKeyOfferId) {
-            const selectedOffer = allOffers.filter(el=> el.id === this.selectedByKeyOfferId)[0]
-            if (Object.hasOwnProperty.call(selectedOffer, 'link')) {
-              this.$router.push(`${selectedOffer.link}`)
-            }
-          }
-          break
         case 38:
-          if (this.selectedByKeyOfferIndex <= 0) {
+          if (this.selectedByArrowKeyOfferIndex <= 0) {
             return
           }
-          this.selectedByKeyOfferIndex--
-          this.selectedByKeyOfferId = allOffers[this.selectedByKeyOfferIndex].id
+          this.selectedByArrowKeyOfferIndex--
+          this.selectedByArrowKeyOfferId = this.foundedOffers[this.selectedByArrowKeyOfferIndex].id
           break
         case 40:
-          if (this.selectedByKeyOfferIndex >= allOffers.length - 1) {
+          if (this.selectedByArrowKeyOfferIndex >= this.foundedOffers.length - 1) {
             return
           }
-          this.selectedByKeyOfferIndex++
-          this.selectedByKeyOfferId = allOffers[this.selectedByKeyOfferIndex].id
+          this.selectedByArrowKeyOfferIndex++
+          this.selectedByArrowKeyOfferId = this.foundedOffers[this.selectedByArrowKeyOfferIndex].id
           break
       }
     },
@@ -226,15 +237,37 @@ name: "SearchForm",
     },
     updateSearchValue(value) {
       this.searchValue = value
+      this.updateRouter()
     },
     showOffers() {
-      if (this.searchValue) {
-        this.getSuggestions()
+      if (!this.searchValue) {
+        this.visibleOffersList  = true
+        this.visibleHistoryAndPhrases = true
       }
-      this.visibleOfferList = true
+      if (this.searchValue && !this.sameQuery && !this.visibleOffersList) {
+        this.getSuggestions(this.searchValue)
+      }
     },
     hideOfferList() {
-      this.visibleOfferList = false
+      this.visibleOffersList = false
+    },
+    findSearch() {
+      if (this.selectedByArrowKeyOfferId) {
+        this.searchValue = this.foundedOffers.filter(el => el.id === this.selectedByArrowKeyOfferId)[0].value
+      }
+      this.updateRouter()
+      this.visibleOffersList = false
+    },
+    updateRouter() {
+      if (this.sameQuery) {
+        return
+      }
+      this.updateHistory()
+      if (this.$route.path === '/search') {
+        this.$router.push({query: {q: this.searchValue.toLowerCase()}}).catch(()=>{})
+      } else {
+        this.$router.push( { path: '/search', query: { q: this.searchValue.toLowerCase() }} )
+      }
     }
   }
 }
