@@ -1,5 +1,5 @@
 <template lang="pug">
-  .b24-search-offers
+  .b24-search-list
     search-form-history-phrases(
       v-if="visibleHistoryAndPhrases"
       :history="history"
@@ -11,18 +11,17 @@
     search-form-suggestions(
       v-if="visibleSuggestions"
       :suggestions="suggestions"
+      @selectItem="selectItem"
       :selectedOfferId="selectedOfferId")
 </template>
 
 <script>
-import SearchOfferProduct from "@/components/SearchForm/SearchFormProduct";
 import SearchFormHistoryPhrases from "@/components/SearchForm/SearchFormHistoryPhrases";
 import SearchFormSuggestions from "@/components/SearchForm/SearchFormSuggestions";
 
 export default {
-  name: "SearchOfferList",
+  name: "SearchFormList",
   components: {
-    SearchOfferProduct,
     SearchFormHistoryPhrases,
     SearchFormSuggestions
   },
@@ -69,7 +68,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
-.b24-search-offers {
+.b24-search-list {
   border: 1px solid #C7CCD7;
   background: #fff;
   border-radius: 0 0 4px 4px;
