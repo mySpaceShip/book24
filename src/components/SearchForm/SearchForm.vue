@@ -136,17 +136,15 @@ name: "SearchForm",
       this.updateHistory()
     },
     updateHistory() {
-      if (!this.searchValue) {
+      const hasItem = this.history.filter(el => el.value.toLowerCase().trim() === this.searchValue.toLowerCase().trim())
+      if (hasItem.length > 0 || !this.searchValue) {
         return
       }
-      if (!this.history) {
-        this.history.push({id: uuid.v4(), value: this.searchValue})
-      } else {
+      const newItem = {id: uuid.v4(), value: this.searchValue}
         if (this.history.length-1 === 3) {
-          this.history = [...this.history.slice(1, this.history.length), { id: uuid.v4(), value: this.searchValue} ]
+          this.history = [...this.history.slice(1, this.history.length), newItem ]
         } else {
-          this.history.push({ id: uuid.v4(), value: this.searchValue})
-        }
+          this.history.push(newItem)
       }
     },
     mapSuggestions(suggestions) {
