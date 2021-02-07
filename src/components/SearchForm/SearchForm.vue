@@ -209,7 +209,7 @@ name: "SearchForm",
       }
     },
     selectOffer(event) {
-      if (event.keyCode !== 38 && event.keyCode !== 40) {
+      if (event.keyCode !== 38 && event.keyCode !== 40 && !this.visibleOffersList) {
         return
       }
       switch (event.keyCode) {
